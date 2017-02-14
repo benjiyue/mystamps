@@ -452,7 +452,6 @@ class CategoryServiceImplTest extends Specification {
 			thrown IllegalArgumentException
 	}
 
-	@SuppressWarnings(['ClosureAsLastMethodParameter', 'UnnecessaryReturnKeyword'])
 	def "getStatisticsOf() should pass arguments to dao"() {
 		given:
 			Integer expectedCollectionId = 15
