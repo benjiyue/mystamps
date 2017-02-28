@@ -44,6 +44,9 @@ public class JdbcImageDataDao implements ImageDataDao {
 	@Value("${image_data.find_by_image_id}")
 	private String findByImageIdSql;
 	
+	@Value("${image_data.find_preview_by_image_id}")
+	private String findPreviewByImageIdSql;
+	
 	@Value("${image_data.add}")
 	private String addImageDataSql;
 	
@@ -52,6 +55,19 @@ public class JdbcImageDataDao implements ImageDataDao {
 		try {
 			return jdbcTemplate.queryForObject(
 				findByImageIdSql,
+				Collections.singletonMap("image_id", imageId),
+				RowMappers::forDbImageDto
+			);
+		} catch (EmptyResultDataAccessException ignored) {
+			return null;
+		}
+	}
+	
+	@Override
+	public DbImageDto findPreviewByImageId(Integer imageId) {
+		try {
+			return jdbcTemplate.queryForObject(
+				findPreviewByImageIdSql,
 				Collections.singletonMap("image_id", imageId),
 				RowMappers::forDbImageDto
 			);

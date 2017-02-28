@@ -95,6 +95,20 @@ public class ImageServiceImpl implements ImageService {
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
+	public ImageDto getPreview(Integer imageId) {
+		Validate.isTrue(imageId != null, "Image id must be non null");
+		Validate.isTrue(imageId > 0, "Image id must be greater than zero");
+		
+		ImageInfoDto image = imageDao.findById(imageId);
+		if (image == null) {
+			return null;
+		}
+		
+		return imagePersistenceStrategy.getPreview(image);
+	}
+	
+	@Override
 	@Transactional
 	@PreAuthorize(HasAuthority.CREATE_SERIES)
 	public void addToSeries(Integer seriesId, Integer imageId) {

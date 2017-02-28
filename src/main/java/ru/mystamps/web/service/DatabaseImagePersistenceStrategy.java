@@ -74,4 +74,15 @@ public class DatabaseImagePersistenceStrategy implements ImagePersistenceStrateg
 		return imageDto;
 	}
 	
+	@Override
+	public ImageDto getPreview(ImageInfoDto image) {
+		DbImageDto imageDto = imageDataDao.findPreviewByImageId(image.getId());
+		if (imageDto == null) {
+			LOG.debug("Found image without preview: #{}", image.getId());
+			return null;
+		}
+		
+		return imageDto;
+	}
+	
 }
