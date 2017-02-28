@@ -92,12 +92,12 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 	
 	@Override
 	public ImageDto get(ImageInfoDto image) {
-		return getFile(image, false);
+		return getFile(storageDir, image);
 	}
 	
 	@Override
 	public ImageDto getPreview(ImageInfoDto image) {
-		return getFile(image, true);
+		return getFile(previewDir, image);
 	}
 	
 	// protected to allow spying
@@ -124,11 +124,7 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 		return Files.readAllBytes(dest);
 	}
 
-	private ImageDto getFile(ImageInfoDto image, boolean preview) {
-		File dir = storageDir;
-		if (preview) {
-			dir = previewDir;
-		}
+	private ImageDto getFile(File dir, ImageInfoDto image) {
 		Path dest = generateFilePath(dir, image);
 		if (!exists(dest)) {
 			LOG.warn("Found image without content: #{} ({} doesn't exist)", image.getId(), dest);
