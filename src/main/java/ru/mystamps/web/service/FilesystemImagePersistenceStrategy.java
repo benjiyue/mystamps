@@ -39,9 +39,11 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 		LoggerFactory.getLogger(FilesystemImagePersistenceStrategy.class);
 	
 	private final File storageDir;
+	private final File previewDir;
 	
-	public FilesystemImagePersistenceStrategy(String storageDir) {
+	public FilesystemImagePersistenceStrategy(String storageDir, String previewDir) {
 		this.storageDir = new File(storageDir);
+		this.previewDir = new File(previewDir);
 	}
 	
 	@PostConstruct
@@ -53,9 +55,24 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 		
 		} else if (!storageDir.canWrite()) {
 			LOG.warn(
+				// TODO(java9): log also user: ProcessHandle.current().info().user()
 				"Directory '{}' exists but isn't writable for the current user! "
 				+ "Image uploading won't work.",
 				storageDir
+			);
+		}
+		
+		LOG.info("Image previews will be saved into {} directory", previewDir);
+		
+		if (!previewDir.exists()) {
+			LOG.warn("Directory '{}' doesn't exist! Image preview generation won't work.", previewDir);
+		
+		} else if (!previewDir.canWrite()) {
+			// TODO(java9): log also user: ProcessHandle.current().info().user()
+			LOG.warn(
+				"Directory '{}' exists but isn't writable for the current user! "
+				+ "Image preview generation won't work.",
+				previewDir
 			);
 		}
 	}
@@ -75,25 +92,12 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 	
 	@Override
 	public ImageDto get(ImageInfoDto image) {
-		Path dest = generateFilePath(storageDir, image);
-		if (!exists(dest)) {
-			LOG.warn("Found image without content: #{} ({} doesn't exist)", image.getId(), dest);
-			return null;
-		}
-		
-		try {
-			byte[] content = toByteArray(dest);
-			return new FsImageDto(image, content);
-		
-		} catch (IOException ex) {
-			throw new ImagePersistenceException(ex);
-		}
+		return getFile(image, false);
 	}
 	
 	@Override
 	public ImageDto getPreview(ImageInfoDto image) {
-		// TODO: implement
-		return null;
+		return getFile(image, true);
 	}
 	
 	// protected to allow spying
@@ -120,6 +124,26 @@ public class FilesystemImagePersistenceStrategy implements ImagePersistenceStrat
 		return Files.readAllBytes(dest);
 	}
 
+	private ImageDto getFile(ImageInfoDto image, boolean preview) {
+		File dir = storageDir;
+		if (preview) {
+			dir = previewDir;
+		}
+		Path dest = generateFilePath(dir, image);
+		if (!exists(dest)) {
+			LOG.warn("Found image without content: #{} ({} doesn't exist)", image.getId(), dest);
+			return null;
+		}
+		
+		try {
+			byte[] content = toByteArray(dest);
+			return new FsImageDto(image, content);
+		
+		} catch (IOException ex) {
+			throw new ImagePersistenceException(ex);
+		}
+	}
+	
 	private static String generateFileName(ImageInfoDto image) {
 		// TODO(performance): specify initial capacity explicitly
 		return new StringBuilder()
